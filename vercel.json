@@ -1,5 +1,23 @@
 {
   "headers": [
-    { "source": "/(.*)", "headers": [{ "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }] }
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://dropvault-cd80d.firebaseapp.com/__/auth/:path*"
+    },
+    {
+      "source": "/__/firebase/:path*",
+      "destination": "https://dropvault-cd80d.firebaseapp.com/__/firebase/:path*"
+    }
   ]
 }
