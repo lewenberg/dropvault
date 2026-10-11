@@ -29,7 +29,7 @@ export default function App() {
       // Closed within a moment means the browser blocked it, not the user.
       const blocked = e.code === 'auth/popup-closed-by-user' && Date.now() - started < 1500
       if (e.code === 'auth/popup-closed-by-user' && !blocked) return
-      if (blocked ||       if (['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/operation-not-supported-in-this-environment', 'auth/internal-error'].includes(e.code)) {
+      if (blocked || ['auth/popup-blocked', 'auth/cancelled-popup-request', 'auth/operation-not-supported-in-this-environment', 'auth/internal-error'].includes(e.code)) {
         return signInWithRedirect(auth, google).catch((r) => setError(r.code || r.message))
       }
       setError(e.code || e.message)
