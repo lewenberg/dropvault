@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
+import { connectAuthEmulator, getAuth, GoogleAuthProvider } from 'firebase/auth'
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 const config = {
@@ -17,3 +17,9 @@ export const auth = app && getAuth(app)
 export const db = app && getFirestore(app)
 export const storage = app && getStorage(app)
 export const google = new GoogleAuthProvider()
+
+// Local development and tests: `VITE_USE_EMULATORS=1` talks to the Firebase emulators.
+if (app && import.meta.env.VITE_USE_EMULATORS) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true })
+  connectFirestoreEmulator(db, '127.0.0.1', 8080)
+}

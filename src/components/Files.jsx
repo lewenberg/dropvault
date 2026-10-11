@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc } from 'firebase/firestore'
-import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage'
-import { db, storage } from '../lib/firebase'
+import { db } from '../lib/firebase'
+import * as blobs from '../lib/blobstore'
 import { fromDrop, fromInput } from '../lib/collect'
 import { zipFiles } from '../lib/zip'
 import { bytes, when } from '../lib/format'
 
-/** Matches the limit in storage.rules. */
-const MAX_UPLOAD = 200 * 1024 * 1024
+const { MAX_UPLOAD } = blobs
 
 const stamp = () => new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')
 
@@ -33,16 +32,10 @@ export default function Files({ user }) {
       setNotice(`${name} is ${bytes(blob.size)}; the limit is ${bytes(MAX_UPLOAD)}.`)
       return
     }
-    const path = `users/${user.uid}/files/${id}/${name}`
     setJobs((all) => [...all, { id, name, progress: 0, stage: 'Uploading' }])
     try {
-      const task = uploadBytesResumable(ref(storage, path), blob, {
-        contentType: blob.type || 'application/octet-stream',
-        contentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(name)}`,
-      })
-      task.on('state_changed', (s) => updateJob(id, { progress: s.bytesTransferred / s.totalBytes }))
-      await task
-      await setDoc(doc(db, 'users', user.uid, 'files', id), { name, path, size: blob.size, createdAt: serverTimestamp(), ...extra })
+      const stored = await blobs.put(user.uid, id, name, blob, (p) => updateJob(id, { progress: p }))
+      await setDoc(doc(db, 'users', user.uid, 'files', id), { name, size: blob.size, createdAt: serverTimestamp(), ...stored, ...extra })
     } catch (err) {
       setNotice(`Upload of ${name} failed: ${err.code || err.message}`)
     } finally {
@@ -91,18 +84,18 @@ export default function Files({ user }) {
   }
 
   async function download(item) {
-    const url = await getDownloadURL(ref(storage, item.path))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = item.name
-    a.click()
+    setNotice(`Preparing ${item.name}…`)
+    try {
+      await blobs.download(user.uid, item)
+      setNotice('')
+    } catch (err) {
+      setNotice(`Download failed: ${err.code || err.message}`)
+    }
   }
 
   async function remove(item) {
     if (!confirm(`Delete ${item.name}?`)) return
-    await deleteObject(ref(storage, item.path)).catch((err) => {
-      if (err.code !== 'storage/object-not-found') throw err
-    })
+    await blobs.remove(user.uid, item)
     await deleteDoc(doc(db, 'users', user.uid, 'files', item.id))
   }
 

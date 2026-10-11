@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:emulators": "firebase emulators:exec --only auth,firestore --project demo-dropvault \"VITE_USE_EMULATORS=1 VITE_FIREBASE_API_KEY=demo VITE_FIREBASE_PROJECT_ID=demo-dropvault vite-node test/blobstore.test.js\"",
+    "test": "node test/collect.test.js && node test/zip.test.js"
   },
   "dependencies": {
     "fflate": "^0.8.3",
@@ -20,7 +22,9 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "firebase-tools": "^13.35.1",
     "oxlint": "^1.81.0",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vite-node": "^6.0.0"
   }
 }
